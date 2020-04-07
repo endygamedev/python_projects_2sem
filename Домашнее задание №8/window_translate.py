@@ -72,5 +72,3 @@ btnExit = Button(text='Выход', command=lambda x=root: x.destroy())
 btnExit.pack()
 
 root.mainloop()
-
-print(f'{rndWord},{wordDict[rndWord.get()]}')
