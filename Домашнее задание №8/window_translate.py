@@ -28,7 +28,7 @@ def checkAnswer():
         entryTranslate.delete(0, END)
         count.set(count.get() + 1)
     else:
-        mb.showerror('Проиграли', f'Вы не правильно перевели!\nПравильное значение: {wordDict[rndWord.get()]}')
+        mb.showerror('Проиграли', f'Вы неправильно перевели!\nПравильное значение: {wordDict[rndWord.get()]}')
         rndWord.set(random.choice(list(wordDict.keys())))
         entryTranslate.delete(0, END)
         if count.get() > 0:
