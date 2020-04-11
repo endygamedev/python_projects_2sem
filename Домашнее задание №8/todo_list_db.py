@@ -4,7 +4,7 @@ from tkinter import *
 # Основная функция
 
 # Я практически не стал переписывать ту функцию, которая была в предыдущих задании с ToDo-листом
-# Можно было дефраментировать этот код для каждого отдельного события, но пусть это будет так :)
+# Можно было дефрагментировать этот код для каждого отдельного события, но пусть это будет так :)
 def main_todo(cursor, action):
     if action == 1: # Добавление элемента в DB
         taskName = entryTaskName.get()
@@ -15,9 +15,12 @@ def main_todo(cursor, action):
             cursor.execute("INSERT INTO tasks(id, category, name, time) VALUES(NULL,?,?,?)", (taskCategory, taskName, taskDate))
 
     if action == 2: # Демонстрация DB файлика в TextBox
+        textBox.config(state=NORMAL)
         textBox.delete(1.0, END)
         for task in cursor.execute("SELECT * FROM tasks").fetchall():
-            textBox.insert(END, f"\nЗадача: {task[2]} Категория: {task[1]} Дата: {task[3]}")
+            textBox.insert(END, f"Задача: {task[2]} Категория: {task[1]} Дата: {task[3]}\n")
+        textBox.config(state=DISABLED)
+
     if action == 3: # Выходим из программы
         root.destroy()
 
@@ -69,7 +72,7 @@ frameMenu.grid(row=0,column=0)
 scrollBarY = Scrollbar(root, orient=VERTICAL)
 scrollBarY.grid(row=0,column=2, sticky='ns')
 
-textBox = Text(root, yscrollcommand=scrollBarY.set, width=40,height=10, wrap=WORD)
+textBox = Text(root, yscrollcommand=scrollBarY.set, width=40,height=10, wrap=WORD, state=DISABLED)
 textBox.grid(row=0,column=1, padx=10, pady=10)
 
 scrollBarY.config(command=textBox.yview)

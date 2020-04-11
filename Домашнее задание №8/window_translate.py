@@ -21,7 +21,7 @@ russianWords = wordList[1::2]
 
 wordDict = dict(zip(englishWords, russianWords)) # Наконец-то создали наш словарик :-)
 
-def checkAnswer():
+def checkAnswer(event):
     if entryTranslate.get().lower() == wordDict[rndWord.get()]:
         mb.showinfo('Выйграли','Вы угадали слово!')
         rndWord.set(random.choice(list(wordDict.keys())))
@@ -65,8 +65,12 @@ labelTranslate.pack()
 entryTranslate = Entry(root, width=40)
 entryTranslate.pack(padx=5)
 
-btnAnswer = Button(root, text='Готово!', command=checkAnswer)
+entryTranslate.bind('<Return>', lambda event: checkAnswer(event)) # Возможность отвечать по кнопке Enter из текстового поля
+
+btnAnswer = Button(root, text='Готово!')
 btnAnswer.pack()
+
+btnAnswer.bind('<Button-1>', lambda event: checkAnswer(event))
 
 btnExit = Button(text='Выход', command=lambda x=root: x.destroy())
 btnExit.pack()
