@@ -6,6 +6,33 @@ import requests
 from epiweeks import Week
 import json
 
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+
+# Добавляем дедлайны из Google-таблицы
+scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
+client = gspread.authorize(creds)
+
+sheet = client.open('DeadlinesTable').sheet1
+
+deadline_table = sheet.get_all_records()
+
+all_deadlines = list(map(lambda x: list(x.values()), deadline_table))
+str_rows = [list(map(str, row)) for row in all_deadlines]
+
+format_res = []
+for row in str_rows:
+    row[0]+=')'
+    row[1]+=':'
+    row[2]+=', Дедлайн до:'
+    format_res.append(row)
+
+finally_res = list(map(lambda x: ' '.join(x), format_res))
+
+deadlines = '\n'.join(finally_res)
+
 
 # Метод для отправки сообщения
 def write_message(user_id, message):
@@ -118,6 +145,9 @@ for session in longpoll.listen():
 
             elif user_message.lower() == commands_list[3]: # команды
                 write_message(session.user_id, messages_list[3])
+
+            elif user_message.lower() == 'дедлайны':
+                write_message(session.user_id, deadlines)
 
             elif user_message.lower() == "клавиатура": # обновляем клавиатуру
                 vk.method("messages.send", {
