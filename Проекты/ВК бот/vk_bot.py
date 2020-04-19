@@ -1,112 +1,50 @@
+# VK API
 import vk_api
-import random
 from vk_api.longpoll import VkLongPoll, VkEventType
+
+# Доп. модули
+import random
 import datetime
 import requests
+from bs4 import BeautifulSoup
 from epiweeks import Week
 import json
 
+# Работа с GoogleDocs
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+# Делаем оригинальные приветствия
+urlGreetings = "https://heaclub.ru/originalnye-neobychnye-privetstviya-pri-vstreche-na-vse-sluchai-zhizni-spisok-privetstvennyh-slov-i-fraz-primery"
 
-# Добавляем дедлайны из Google-таблицы
-scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
-client = gspread.authorize(creds)
+greetings_list = []
 
-sheet = client.open('DeadlinesTable').sheet1
+resp = requests.get(urlGreetings)
+soup = BeautifulSoup(resp.content, features="html.parser")
+greetings = soup.findAll('li')
+for hello in greetings:
+    greetings_list.append(hello.text)
 
-deadline_table = sheet.get_all_records()
-
-all_deadlines = list(map(lambda x: list(x.values()), deadline_table))
-str_rows = [list(map(str, row)) for row in all_deadlines]
-
-format_res = []
-for row in str_rows:
-    row[0]+=')'
-    row[1]+=':'
-    row[2]+=', Дедлайн до:'
-    format_res.append(row)
-
-finally_res = list(map(lambda x: ' '.join(x), format_res))
-
-deadlines = '\n'.join(finally_res)
-
-
-# Метод для отправки сообщения
-def write_message(user_id, message):
-    '''
-    write_message(user_id, message) - отправка текстового сообщения с текстом message.
-    '''
-
-    vk.method('messages.send', {
-    'user_id': user_id,
-    'message': message,
-    'random_id': random.getrandbits(31) * random.choice([-1, 1])
-    })
-
-# Метод для отправки сообщения с картинкой
-def send_photo(user_id, message, picture):
-    '''
-    send_photo(user_id, message, picture) - отправка сообщения сообщения с текстом message и с картинкой picture.
-    '''
-
-    picURLFromServer = vk.method("photos.getMessagesUploadServer") # Получаем ссылку от сервера ВК на загрузку фото
-    sendPicToServer = requests.post(picURLFromServer['upload_url'], files={'photo': open(picture, 'rb')}).json() # Загружаем фото на адрес сервера, которое нам выдал VK Api Server
-    savePicToServer = vk.method('photos.saveMessagesPhoto', {'photo': sendPicToServer['photo'], 'server': sendPicToServer['server'], 'hash': sendPicToServer['hash']})[0] # Сохраняем добавленное фото на сервера ВК
-    dataPic = f'photo{savePicToServer["owner_id"]}_{savePicToServer["id"]}' # Записываем все данные о фотографии
-
-    vk.method("messages.send", { # высылаем наше сообщение
-    'user_id': user_id,
-    'message': message,
-    'attachment': dataPic,
-    'random_id': random.getrandbits(31) * random.choice([-1, 1])
-     })
-
-# Конструктор для кнопки
-def button(label, color):
-    '''
-    button(label, color) - конструктор для создания кнопок
-    '''
-    return {
-        "action": {
-            "type": "text",
-            "label": label
-        },
-        "color": color
-    }
-
-# Клавиатура
-keyboard = {
-    "one_time": False,
-    "buttons": [
-        [
-        button("Привет", "positive"),
-        button("Команды","default"),
-        button("Пока","negative")
-        ],
-        [
-        button("Расписание","primary"),
-        ]
-    ]
-}
-
-keyboard = json.dumps(keyboard, ensure_ascii=False).encode('utf-8')
-keyboard = str(keyboard.decode('utf-8'))
-
+# Делаем оригинальные прощания
+goodbye_list = ['Пока-пока, человек...', 'Пока!\nБудь здоров!', 'Увидимся!', 'Пока, бывай', 'До скорого']
 
 # Токен нашей группы
 _TOKEN = '3d423eb8812629fc6834d96bd0b5352f75f83f7691f828ca84ac57b909bf2ff519f438bc6aa4d9316cc03'
 
 vk = vk_api.VkApi(token=_TOKEN)
 
+
+# Эмоджи
+_EMODJIS = ['👻 ','🤡 ','🤓 ','😁 ','😏 ','😛 ','👋 ']
+
 # Команды
 _COMMANDS = {
-             'привет': "🤓 Привет-привет, человек!",
-             'пока': "👋 Пока-пока, человек!",
+             'привет': 'random.choice(_EMODJIS)+random.choice(greetings_list[25:-40])',
+             'пока': 'random.choice(_EMODJIS)+random.choice(goodbye_list)',
              'расписание': "📅 Не подскажите какая неделька (чётная или нечётная)",
-             'команды': "Команды:\n• привет\n• пока\n• расписание\n• команды"
+             'команды': "🔧 Команды:\n• привет\n• пока\n• расписание\n• дедлайны\n• почта\n• команды",
+             'дедлайны': "update_deadlines(client)",
+             'почта': "📬Логин: appliedmath1900@yahoo.com\n🔒Пароль: PMstudents1900"
              }
 
 commands_list = list(_COMMANDS.keys())
@@ -121,7 +59,109 @@ with open('oddWeek.txt', 'r', encoding="utf-8") as file_odd, open('evenWeek.txt'
     evenWeek = file_even.read()
 
 # Определяет текущую неделю, мы выявили опытным путём, что начало недель датируется 13.8.2019
-weekNumber = Week.fromdate(datetime.date(2019,8,13)).weektuple()[-1]
+weekNumber = Week.fromdate(datetime.date(2019,8,10)).weektuple()[-1]
+
+
+# Метод для отправки сообщения
+def write_message(user_id, message):
+    '''
+    write_message(user_id, message) - отправка текстового сообщения с текстом message.
+    '''
+    vk.method('messages.send', {
+    'user_id': user_id,
+    'message': message,
+    'random_id': random.getrandbits(31) * random.choice([-1, 1])
+    })
+
+# Метод для отправки сообщения с картинкой
+def send_photo(user_id, message, picture):
+    '''
+    send_photo(user_id, message, picture) - отправка сообщения сообщения с текстом message и с картинкой picture.
+    '''
+    picURLFromServer = vk.method("photos.getMessagesUploadServer") # Получаем ссылку от сервера ВК на загрузку фото
+    sendPicToServer = requests.post(picURLFromServer['upload_url'], files={'photo': open(picture, 'rb')}).json() # Загружаем фото на адрес сервера, которое нам выдал VK Api Server
+    savePicToServer = vk.method('photos.saveMessagesPhoto', {'photo': sendPicToServer['photo'], 'server': sendPicToServer['server'], 'hash': sendPicToServer['hash']})[0] # Сохраняем добавленное фото на сервера ВК
+    dataPic = f'photo{savePicToServer["owner_id"]}_{savePicToServer["id"]}' # Записываем все данные о фотографии
+
+    vk.method("messages.send", { # высылаем наше сообщение
+    'user_id': user_id,
+    'message': message,
+    'attachment': dataPic,
+    'random_id': random.getrandbits(31) * random.choice([-1, 1])
+     })
+
+# Данные для GoogleDrive API
+scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
+client = gspread.authorize(creds)
+
+# Метод для отправки сообщения с картинкой
+def update_deadlines(client):
+    sheet = client.open('DeadlinesTable').sheet1 # открываем таблицу
+
+    deadline_table = sheet.get_all_records() # забираем оттуда все записи
+
+    all_deadlines = list(map(lambda x: list(x.values()), deadline_table)) # забираем все значения
+    str_rows = [list(map(str, row)) for row in all_deadlines] # конвертируем все элеементы в таблице в string
+
+    format_deadlines = [] # Форматируем данные, чтобы всё было по красоте
+    for row in str_rows:
+        row[0]+=')'
+        row[1]+=':'
+        row[2]+=', Дедлайн до:'
+        format_deadlines.append(row)
+
+    finally_deadlines = list(map(lambda x: ' '.join(x), format_deadlines)) # формируем список списков в простой список с отформтированными дедлайнами
+    deadlines = '\n'.join(finally_deadlines) # выводим наши отформатированные и готовенькие дедлайны
+    return deadlines
+
+# Конструктор для текстовой кнопки
+def text_button(label, color):
+    '''
+    button(label, color) - конструктор для создания кнопок
+    '''
+    return {
+        "action": {
+            "type": "text",
+            "label": label
+        },
+        "color": color
+    }
+
+# Конструктор для ссылки
+def link_button(link, label):
+    return {
+        "action": {
+            "type": "open_link",
+            "link": link,
+            "label": label
+        }
+    }
+
+# Клавиатура
+keyboard = {
+    "one_time": False,
+    "buttons": [
+        [
+            text_button("Привет", "primary"),
+            text_button("Команды","default"),
+            text_button("Пока","primary")
+        ],
+        [
+            text_button("Расписание","positive"),
+            text_button("Почта","primary"),
+            text_button("Дедлайны","negative")
+        ],
+        [
+            link_button('http://www.rating.unecon.ru/', "БРС"),
+            link_button('https://student.unecon.ru/', "Moodle")
+        ],
+    ]
+}
+
+# Очищаем все кодировки
+keyboard = json.dumps(keyboard, ensure_ascii=False).encode('utf-8')
+keyboard = str(keyboard.decode('utf-8'))
 
 
 longpoll = VkLongPoll(vk)
@@ -132,10 +172,10 @@ for session in longpoll.listen():
             user_message = session.text
 
             if user_message.lower() == commands_list[0]: # привет
-                send_photo(session.user_id, messages_list[0], random.choice(_PICTURES[1:3]))
+                send_photo(session.user_id, random.choice(_EMODJIS)+random.choice(greetings_list[25:-40]), random.choice(_PICTURES[1:4]))
 
             elif user_message.lower() == commands_list[1]: # пока
-                send_photo(session.user_id, messages_list[1], _PICTURES[0])
+                send_photo(session.user_id, random.choice(_EMODJIS)+random.choice(goodbye_list), _PICTURES[0])
 
             elif user_message.lower() == commands_list[2]: # расписание
                 if weekNumber%2 == 0:
@@ -146,8 +186,11 @@ for session in longpoll.listen():
             elif user_message.lower() == commands_list[3]: # команды
                 write_message(session.user_id, messages_list[3])
 
-            elif user_message.lower() == 'дедлайны':
-                write_message(session.user_id, deadlines)
+            elif user_message.lower() == commands_list[4]: # дедланы
+                write_message(session.user_id, update_deadlines(client))
+
+            elif user_message.lower() == commands_list[5]: # почта
+                write_message(session.user_id, messages_list[5])
 
             elif user_message.lower() == "клавиатура": # обновляем клавиатуру
                 vk.method("messages.send", {
