@@ -35,15 +35,15 @@ vk = vk_api.VkApi(token=_TOKEN)
 
 
 # Эмоджи
-_EMODJIS = ['👻 ','🤡 ','🤓 ','😁 ','😏 ','😛 ','👋 ']
+_EMOJIS = ['👻 ','🤡 ','🤓 ','😁 ','😏 ','😛 ','👋 ']
 
 # Команды
 _COMMANDS = {
-             'привет': 'random.choice(_EMODJIS)+random.choice(greetings_list[25:-40])',
-             'пока': 'random.choice(_EMODJIS)+random.choice(goodbye_list)',
-             'расписание': "📅 Не подскажите какая неделька (чётная или нечётная)",
+             'привет': 'random.choice(_EMOJIS)+random.choice(greetings_list[25:-40])',
+             'пока': 'random.choice(_EMOJIS)+random.choice(goodbye_list)',
+             'расписание': 'weekNumber',
              'команды': "🔧 Команды:\n• привет\n• пока\n• расписание\n• дедлайны\n• почта\n• команды",
-             'дедлайны': "update_deadlines(client)",
+             'дедлайны': 'update_deadlines(client)',
              'почта': "📬Логин: appliedmath1900@yahoo.com\n🔒Пароль: PMstudents1900"
              }
 
@@ -172,10 +172,10 @@ for session in longpoll.listen():
             user_message = session.text
 
             if user_message.lower() == commands_list[0]: # привет
-                send_photo(session.user_id, random.choice(_EMODJIS)+random.choice(greetings_list[25:-40]), random.choice(_PICTURES[1:4]))
+                send_photo(session.user_id, random.choice(_EMOJIS)+random.choice(greetings_list[25:-40]), random.choice(_PICTURES[1:3]))
 
             elif user_message.lower() == commands_list[1]: # пока
-                send_photo(session.user_id, random.choice(_EMODJIS)+random.choice(goodbye_list), _PICTURES[0])
+                send_photo(session.user_id, random.choice(_EMOJIS)+random.choice(goodbye_list), _PICTURES[0])
 
             elif user_message.lower() == commands_list[2]: # расписание
                 if weekNumber%2 == 0:
