@@ -192,10 +192,18 @@ for session in longpoll.listen():
             elif user_message.lower() == commands_list[5]: # почта
                 write_message(session.user_id, messages_list[5])
 
-            elif user_message.lower() == "клавиатура": # обновляем клавиатуру
+            elif user_message.lower() == 'история': # добавляем кол-во сообщений в переписке
+                mes = vk.method('messages.getHistory', {
+                    "user_id": session.user_id,
+                    "count": 200
+                })
+                write_message(session.user_id, mes['count'])
+
+
+            elif user_message.lower() == "клавиатура" or user_message.lower() == "начать": # обновляем клавиатуру
                 vk.method("messages.send", {
                             "user_id": session.user_id,
-                            "message": "⌨",
+                            "message": "⌨ Ипользую клавиатуру для общения со мной",
                             "random_id": random.getrandbits(31) * random.choice([-1, 1]),
                             "keyboard": keyboard
                             })
